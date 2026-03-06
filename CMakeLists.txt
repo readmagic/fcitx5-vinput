@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(VINPUT_PROJECT_VERSION "0.1.3"
+set(VINPUT_PROJECT_VERSION "0.1.4"
     CACHE STRING "Project version for builds and release artifacts")
 project(fcitx5-vinput VERSION ${VINPUT_PROJECT_VERSION} LANGUAGES CXX)
 

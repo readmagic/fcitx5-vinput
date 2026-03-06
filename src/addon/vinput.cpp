@@ -126,6 +126,45 @@ int DigitSelectionIndex(fcitx::CandidateList* candidate_list, int digit) {
     return current_page * kMenuPageSize + digit;
 }
 
+int CurrentSelectionIndex(fcitx::CandidateList* candidate_list) {
+    if (!candidate_list) {
+        return -1;
+    }
+
+    int current_index = candidate_list->cursorIndex();
+    if (current_index < 0) {
+        return -1;
+    }
+
+    auto* pageable = candidate_list->toPageable();
+    int current_page = pageable ? pageable->currentPage() : 0;
+    if (current_page < 0) {
+        current_page = 0;
+    }
+
+    return current_page * kMenuPageSize + current_index;
+}
+
+void MoveCursorToIndex(fcitx::CandidateList* candidate_list, int target_index) {
+    auto* cursor_list = candidate_list ? candidate_list->toCursorMovable() : nullptr;
+    if (!cursor_list || target_index <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < target_index; ++i) {
+        cursor_list->nextCandidate();
+    }
+}
+
+std::string DisplayTextWithComment(std::string text, const std::string& comment) {
+    if (comment.empty()) {
+        return text;
+    }
+    text.append(" ");
+    text.append(comment);
+    return text;
+}
+
 bool ChangeCandidatePage(fcitx::InputContext* ic,
                          const std::string& base_title, bool next_page) {
     if (!ic) {
@@ -158,13 +197,11 @@ bool ChangeCandidatePage(fcitx::InputContext* ic,
 class SceneCandidateWord : public fcitx::CandidateWord {
 public:
     SceneCandidateWord(VinputEngine* engine, SceneOption option, bool active)
-        : fcitx::CandidateWord(fcitx::Text(option.label)),
+        : fcitx::CandidateWord(fcitx::Text(DisplayTextWithComment(
+              option.label, active ? (UseChineseSceneUi() ? "（当前）" : "(Current)")
+                                   : std::string()))),
           engine_(engine),
-          index_(option.index) {
-        if (active) {
-            setComment(fcitx::Text(UseChineseSceneUi() ? "当前" : "Current"));
-        }
-    }
+          index_(option.index) {}
 
     void select(fcitx::InputContext* inputContext) const override {
         engine_->selectScene(index_, inputContext);
@@ -179,13 +216,10 @@ class ResultCandidateWord : public fcitx::CandidateWord {
 public:
     ResultCandidateWord(VinputEngine* engine, std::size_t index,
                         const std::string& text, const std::string& comment)
-        : fcitx::CandidateWord(fcitx::Text(DisplayCandidateText(text))),
+        : fcitx::CandidateWord(fcitx::Text(
+              DisplayTextWithComment(DisplayCandidateText(text), comment))),
           engine_(engine),
-          index_(index) {
-        if (!comment.empty()) {
-            setComment(fcitx::Text(comment));
-        }
-    }
+          index_(index) {}
 
     void select(fcitx::InputContext* inputContext) const override {
         engine_->selectResultCandidate(index_, inputContext);
@@ -388,7 +422,7 @@ void VinputEngine::showSceneMenu(fcitx::InputContext* ic) {
             },
             active);
     }
-    candidate_list->setCursorIndex(active_index);
+    MoveCursorToIndex(candidate_list.get(), active_index);
 
     SetMenuTitle(ic, SceneMenuTitle(), candidate_list.get());
     ic->inputPanel().setCandidateList(std::move(candidate_list));
@@ -441,7 +475,7 @@ void VinputEngine::showResultMenu(fcitx::InputContext* ic,
             this, i, candidate.text,
             ResultCandidateComment(candidate, llm_index));
     }
-    candidate_list->setCursorIndex(cursor_index);
+    MoveCursorToIndex(candidate_list.get(), cursor_index);
 
     SetMenuTitle(ic, ResultMenuTitle(result_candidates_.size()),
                  candidate_list.get());
@@ -474,9 +508,6 @@ bool VinputEngine::handleSceneMenuKeyEvent(fcitx::KeyEvent& keyEvent) {
     auto candidate_list = scene_menu_ic_->inputPanel().candidateList();
     auto* cursor_list =
         candidate_list ? candidate_list->toCursorMovable() : nullptr;
-    auto* bulk_cursor =
-        candidate_list ? candidate_list->toBulkCursor() : nullptr;
-
     if (keyEvent.isRelease()) {
         if (MatchesKeyList(keyEvent.key(), scene_menu_key_) ||
             MatchesKeyList(keyEvent.key(), page_prev_keys_) ||
@@ -539,10 +570,9 @@ bool VinputEngine::handleSceneMenuKeyEvent(fcitx::KeyEvent& keyEvent) {
         return true;
     }
 
-    if (bulk_cursor &&
-        (keyEvent.key().check(FcitxKey_Return) ||
-         keyEvent.key().check(FcitxKey_KP_Enter))) {
-        int index = bulk_cursor->globalCursorIndex();
+    if (keyEvent.key().check(FcitxKey_Return) ||
+        keyEvent.key().check(FcitxKey_KP_Enter)) {
+        int index = CurrentSelectionIndex(candidate_list.get());
         if (index < 0) {
             for (std::size_t i = 0; i < scene_config_.scenes.size(); ++i) {
                 if (scene_config_.scenes[i].id == active_scene_id_) {
@@ -572,9 +602,6 @@ bool VinputEngine::handleResultMenuKeyEvent(fcitx::KeyEvent& keyEvent) {
     auto candidate_list = result_menu_ic_->inputPanel().candidateList();
     auto* cursor_list =
         candidate_list ? candidate_list->toCursorMovable() : nullptr;
-    auto* bulk_cursor =
-        candidate_list ? candidate_list->toBulkCursor() : nullptr;
-
     if (keyEvent.isRelease()) {
         if (keyEvent.key().digitSelection() >= 0 ||
             MatchesKeyList(keyEvent.key(), page_prev_keys_) ||
@@ -638,10 +665,9 @@ bool VinputEngine::handleResultMenuKeyEvent(fcitx::KeyEvent& keyEvent) {
         return true;
     }
 
-    if (bulk_cursor &&
-        (keyEvent.key().check(FcitxKey_Return) ||
-         keyEvent.key().check(FcitxKey_KP_Enter))) {
-        int index = bulk_cursor->globalCursorIndex();
+    if (keyEvent.key().check(FcitxKey_Return) ||
+        keyEvent.key().check(FcitxKey_KP_Enter)) {
+        int index = CurrentSelectionIndex(candidate_list.get());
         if (index < 0) {
             index = 0;
         }
