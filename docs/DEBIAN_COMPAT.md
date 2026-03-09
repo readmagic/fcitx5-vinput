@@ -11,6 +11,9 @@
 - `libpipewire-0.3-0t64` (t64 过渡包)
 - `libstdc++6 >= 13.1` (Debian 12 只有 12.2.0)
 
+主要 API 兼容性问题：
+- `fcitx::Key::digitSelection()` 方法在 fcitx5 5.0.x 中不存在（5.1.x 引入）
+
 ## 解决方案
 
 ### 1. 修改 CMakeLists.txt
@@ -31,7 +34,28 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "fcitx5, libc6 (>= 2.34), libcurl4 (>= 7.16.2) 
 
 将构建环境从 `ubuntu-24.04` 改为 `ubuntu-22.04`，确保生成的二进制文件兼容旧版本系统。
 
-### 3. 本地构建脚本
+### 3. 代码兼容性修复
+
+在 `src/addon/vinput.cpp` 中添加了 `GetDigitSelection()` 函数，兼容 fcitx5 5.0.x：
+
+```cpp
+// 兼容 fcitx5 5.0.x：实现 digitSelection 功能
+int GetDigitSelection(const fcitx::Key& key) {
+    if (key.states() != fcitx::KeyState::NoState) {
+        return -1;
+    }
+    const auto sym = key.sym();
+    if (sym >= FcitxKey_0 && sym <= FcitxKey_9) {
+        return (sym - FcitxKey_0 + 9) % 10;
+    }
+    if (sym >= FcitxKey_KP_0 && sym <= FcitxKey_KP_9) {
+        return (sym - FcitxKey_KP_0 + 9) % 10;
+    }
+    return -1;
+}
+```
+
+### 4. 本地构建脚本
 
 创建了 `scripts/build-deb-local.sh` 脚本，方便在本地进行测试构建。
 

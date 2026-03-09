@@ -16,10 +16,12 @@
 - 添加本地构建脚本 `scripts/build-deb-local.sh`
 - 添加依赖检查脚本 `scripts/check-deps.sh`
 - 添加 Debian 兼容性文档 `docs/DEBIAN_COMPAT.md`
+- 添加 `GetDigitSelection()` 函数以兼容 fcitx5 5.0.x
 
 ### Fixed
 - 修复在 Debian 12 上无法安装的依赖问题
 - 修复在 Ubuntu 22.04 上无法安装的依赖问题
+- 修复在 fcitx5 5.0.x 上编译失败的问题（`Key::digitSelection()` 方法不存在）
 
 ## [0.1.6] - 2026-03-09
 
