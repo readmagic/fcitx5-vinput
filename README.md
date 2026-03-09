@@ -244,7 +244,39 @@ ModelName=sherpa-onnx-paraformer-zh-small-2024-03-09
 - 仓库内置了 `GitHub Actions` 发布流程，入口在 `.github/workflows/release.yml`
 - 推送形如 `v0.1.0` 的 tag 后，workflow 会自动构建并上传这些产物到 GitHub Release：
   - 源码包 `fcitx5-vinput-<version>.tar.gz`
-  - Ubuntu 24.04 `.deb`
+  - Ubuntu 22.04 `.deb` (兼容 Debian 12 和 Ubuntu 22.04+)
   - Arch Linux `.pkg.tar.zst`
 - `Debian/Ubuntu` 打包复用 `CMake + CPack`
 - `Arch` 打包复用 `packaging/arch/PKGBUILD.in`
+
+## 本地构建
+
+### Debian/Ubuntu 包构建
+
+```bash
+# 运行构建脚本
+./scripts/build-deb-local.sh
+
+# 安装生成的包
+sudo dpkg -i dist/fcitx5-vinput_*.deb
+
+# 如果有依赖问题，运行
+sudo apt-get install -f
+```
+
+详细的兼容性说明请参考 [docs/DEBIAN_COMPAT.md](docs/DEBIAN_COMPAT.md)
+
+### 依赖检查
+
+在构建前可以运行依赖检查脚本：
+
+```bash
+./scripts/check-deps.sh
+```
+
+### 支持的系统
+
+- Ubuntu 22.04 LTS 及更新版本
+- Debian 12 (Bookworm) 及更新版本
+- Arch Linux (滚动更新)
+

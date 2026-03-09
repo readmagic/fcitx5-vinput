@@ -53,7 +53,7 @@ jobs:
 
   build-deb:
     needs: source_archive
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Install build dependencies
         run: |
@@ -102,7 +102,7 @@ jobs:
             exit 1
           fi
 
-          asset_name="fcitx5-vinput_${{ needs.source_archive.outputs.package_version }}-${{ needs.source_archive.outputs.package_release }}_ubuntu24.04_amd64.deb"
+          asset_name="fcitx5-vinput_${{ needs.source_archive.outputs.package_version }}-${{ needs.source_archive.outputs.package_release }}_ubuntu22.04_amd64.deb"
           mv "${deb_path}" "dist/${asset_name}"
           dpkg-deb -I "dist/${asset_name}" >/dev/null
 

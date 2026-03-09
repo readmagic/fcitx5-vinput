@@ -1,0 +1,38 @@
+fix: 修复 Debian 12 和 Ubuntu 22.04 兼容性问题
+
+修改内容：
+
+1. CMakeLists.txt
+   - 手动指定 Debian 包依赖以兼容旧版本系统
+   - 降低 libc6 要求从 2.38 到 2.34
+   - 降低 libfcitx5* 要求从 5.1.7 到 5.0.0
+   - 降低 libstdc++6 要求从 13.1 到 12
+   - 使用 | 语法支持新旧包名（libcurl4/libcurl4t64, libpipewire-0.3-0/libpipewire-0.3-0t64）
+
+2. .github/workflows/release.yml
+   - 将构建环境从 ubuntu-24.04 改为 ubuntu-22.04
+   - 修改生成的包名从 ubuntu24.04 改为 ubuntu22.04
+
+3. 新增文件
+   - scripts/build-deb-local.sh: 本地构建脚本
+   - scripts/check-deps.sh: 依赖检查脚本
+   - docs/DEBIAN_COMPAT.md: 兼容性详细文档
+   - docs/COMPAT_FIX_SUMMARY.md: 修改总结
+   - docs/QUICK_FIX.md: 快速修复指南
+   - CHANGELOG.md: 项目变更日志
+
+4. README.md
+   - 添加本地构建说明
+   - 添加依赖检查说明
+   - 更新支持的系统列表
+
+修复问题：
+- 修复在 Debian 12 上无法安装的依赖问题
+- 修复在 Ubuntu 22.04 上无法安装的依赖问题
+
+支持的系统：
+- Ubuntu 22.04 LTS 及更新版本
+- Debian 12 (Bookworm) 及更新版本
+- Arch Linux (滚动更新)
+
+作者: Frandy
