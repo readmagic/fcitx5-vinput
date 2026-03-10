@@ -84,6 +84,24 @@ bool MatchesKeyList(const fcitx::Key &key, const fcitx::KeyList &key_list) {
   return key.keyListIndex(key_list) >= 0;
 }
 
+// 兼容 fcitx5 5.0.x 的数字选择函数
+int GetDigitSelection(const fcitx::Key &key) {
+  const auto sym = key.sym();
+  if (sym >= FcitxKey_1 && sym <= FcitxKey_9) {
+    return sym - FcitxKey_1;
+  }
+  if (sym == FcitxKey_0) {
+    return 9;
+  }
+  if (sym >= FcitxKey_KP_1 && sym <= FcitxKey_KP_9) {
+    return sym - FcitxKey_KP_1;
+  }
+  if (sym == FcitxKey_KP_0) {
+    return 9;
+  }
+  return -1;
+}
+
 std::string DecoratePagedMenuTitle(const std::string &base_title,
                                    fcitx::CandidateList *candidate_list) {
   auto *pageable = candidate_list ? candidate_list->toPageable() : nullptr;
@@ -490,7 +508,7 @@ bool VinputEngine::handleSceneMenuKeyEvent(fcitx::KeyEvent &keyEvent) {
     if (MatchesKeyList(keyEvent.key(), scene_menu_key_) ||
         MatchesKeyList(keyEvent.key(), page_prev_keys_) ||
         MatchesKeyList(keyEvent.key(), page_next_keys_) ||
-        keyEvent.key().digitSelection() >= 0 ||
+        GetDigitSelection(keyEvent.key()) >= 0 ||
         keyEvent.key().check(FcitxKey_Up) ||
         keyEvent.key().check(FcitxKey_Down) ||
         keyEvent.key().check(FcitxKey_Return) ||
@@ -525,7 +543,7 @@ bool VinputEngine::handleSceneMenuKeyEvent(fcitx::KeyEvent &keyEvent) {
     return true;
   }
 
-  const int digit = keyEvent.key().digitSelection();
+  const int digit = GetDigitSelection(keyEvent.key());
   const int digit_index = DigitSelectionIndex(candidate_list.get(), digit);
   if (digit >= 0 &&
       digit_index < static_cast<int>(scene_config_.scenes.size())) {
@@ -583,7 +601,7 @@ bool VinputEngine::handleResultMenuKeyEvent(fcitx::KeyEvent &keyEvent) {
   auto *cursor_list =
       candidate_list ? candidate_list->toCursorMovable() : nullptr;
   if (keyEvent.isRelease()) {
-    if (keyEvent.key().digitSelection() >= 0 ||
+    if (GetDigitSelection(keyEvent.key()) >= 0 ||
         MatchesKeyList(keyEvent.key(), page_prev_keys_) ||
         MatchesKeyList(keyEvent.key(), page_next_keys_) ||
         keyEvent.key().check(FcitxKey_Up) ||
@@ -617,7 +635,7 @@ bool VinputEngine::handleResultMenuKeyEvent(fcitx::KeyEvent &keyEvent) {
     return true;
   }
 
-  const int digit = keyEvent.key().digitSelection();
+  const int digit = GetDigitSelection(keyEvent.key());
   const int digit_index = DigitSelectionIndex(candidate_list.get(), digit);
   if (digit >= 0 && digit_index < static_cast<int>(result_candidates_.size())) {
     selectResultCandidate(static_cast<std::size_t>(digit_index),

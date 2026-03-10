@@ -245,5 +245,4 @@ ModelName=sherpa-onnx-paraformer-zh-small-2024-03-09
 - 推送形如 `v0.1.0` 的 tag 后，workflow 会自动构建并上传这些产物到 GitHub Release：
   - 源码包 `fcitx5-vinput-<version>.tar.gz`
   - Debian 12 `.deb`
-  - Ubuntu 22.04 `.deb`
 - `Debian/Ubuntu` 打包复用 `CMake + CPack`
