@@ -66,6 +66,7 @@ jobs:
             pkg-config \
             gettext \
             dpkg-dev \
+            file \
             curl \
             libcurl4-openssl-dev \
             libpipewire-0.3-dev \
